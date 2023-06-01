@@ -1,0 +1,70 @@
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium import webdriver
+import time
+import pickle
+import re
+import os
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver import Edge
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.edge.options import Options
+import pandas as pd
+from pyecharts import options as opts
+from pyecharts.charts import Line,Bar,Pie,Map
+# cmd='msedge.exe --remote-debugging-port=9222 --user-data-dir="D:\python\seleniumEdge"'
+Edge_op = Options()
+Edge_op.add_experimental_option("debuggerAddress","127.0.0.1:9222")
+Edge_op.page_load_strategy = 'eager'
+prefs = {
+'profile.managed_default_content_settings.images': 2,
+'javascript':2,
+'permissions.default.stylesheet': 2
+}   
+webdriver.EdgeOptions().add_experimental_option('prefs', prefs)
+driver = webdriver.Edge(options=Edge_op)
+def hash4():
+    url="https://etherscan.io/accounts"
+    driver.get(url)
+    time.sleep(0.5) 
+    list=[]
+    for i in range(1,26):
+        name = driver.find_element(By.XPATH,'//*[@id="ContentPlaceHolder1_divTable"]/table/tbody/tr['+str(i)+']/td[3]').text
+        balance=driver.find_element(By.XPATH,'//*[@id="ContentPlaceHolder1_divTable"]/table/tbody/tr['+str(i)+']/td[4]').text
+    #print(name,balance)
+        list.append([name,balance])
+    #print(list)
+    return list
+def hash5():
+    list=hash4()
+    df = pd.DataFrame(list, columns=['name', 'balance'])
+    # Convert DataFrame to CSV
+    df.to_csv('hashking2.csv', index=False)  
+    #print("CSV file created successfully.")
+def hash6():
+    df = pd.read_csv('hashking2.csv')
+    x =df['name'].tolist()
+    x = ['null' if value == '' else value for value in x]
+    y = df['balance']
+    y = [float(value.replace(',', '').replace(' ETH', ''))/100000 for value in y]
+    df['balance'] = df['balance'].astype(str)  # 转换为字符串类型
+    df['balance'] = pd.to_numeric(df['balance'], errors='coerce').astype(float)
+
+    #print(y)
+    #print(df['balance'].dtype)
+    bar = Bar()
+    bar.add_xaxis(x)
+    bar.add_yaxis("Top Accounts by ETH Balance ",y)
+    bar.set_global_opts(
+        xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-45)),
+        title_opts=opts.TitleOpts(title="Top Accounts by ETH Balance"),
+        yaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(formatter="{value}00k ETH"))
+
+    )
+
+    bar.set_colors(["yellow"])
+    bar.render(r"测试2.html")
+hash5()
+hash6()
