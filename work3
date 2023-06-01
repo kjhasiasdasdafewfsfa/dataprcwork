@@ -1,0 +1,53 @@
+import requests
+import pandas as pd
+from pyecharts.charts import Line,Bar,Pie,Map
+from pyecharts import options as opts
+from bs4 import BeautifulSoup
+def hash7():
+    url="https://zh.wikipedia.org/zh-hans/NBA%E7%B8%BD%E5%86%A0%E8%BB%8D%E5%88%97%E8%A1%A8#%E5%86%A0%E5%86%9B%E6%95%99%E7%BB%83"
+    res=requests.get(url)
+    res.encoding=res.apparent_encoding
+    text = res.text
+    #print(text)
+    soup = BeautifulSoup(text,"html.parser")
+    tags_2=soup.find_all('tbody')[6]
+    #print(tags_2)
+    tags=tags_2.find_all('tr')
+    i=0
+    list=[]
+    for tag in tags:
+        i=i+1
+        if(21>i>1):
+            t=tag.find_all('td')
+            #print(len(t))
+            #print(t)
+            name=t[0].text.strip()
+            num=t[1].text.strip()
+            #print(name,num)
+            list.append([name,num])
+    #print(list)
+    return list
+def hash8():
+    list=hash7()
+    df = pd.DataFrame(list, columns=['name', 'num'])
+    # Convert DataFrame to CSV
+    df.to_csv('hashking3.csv', index=False)  
+    #print("CSV file created successfully.")
+def hash9():
+    df = pd.read_csv('hashking3.csv')
+    x =df['name'].tolist()
+    y=df['num'].tolist()
+    df['num'] = df['num'].astype(str)  # 转换为字符串类型
+    df['num'] = pd.to_numeric(df['num'], errors='coerce').astype(float)
+    print(y)
+    print(df['num'].dtype)
+    bar = Bar()
+    bar.add_xaxis(x)
+    bar.add_yaxis("NBA champion ",y)
+    bar.set_global_opts(
+        xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-45)),
+        title_opts=opts.TitleOpts(title="NBA champion"))
+    bar.set_colors(["yellow"])
+    bar.render(r"测试3.html")
+#hash8()
+hash9()
